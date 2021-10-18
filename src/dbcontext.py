@@ -583,4 +583,67 @@ class Dbcontext():
             print(f"{ids} complete")
             ids += 1
 
-            
+    def parseIn2DbHistory(self, all_projectData):
+
+        currentTime = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+
+        # insert real time data
+        for project_data in all_projectData:
+            for pm25_data, voc_data in zip(project_data[0], project_data[1]):
+                
+                datetime_value = None
+                pm25_value = None
+                voc_value = None
+                onlineStatus = False
+
+                try:
+                    datetime_value = pm25_data["time"]
+                    pm25_value = voc_data["value"][0]
+                    voc_value = pm25_data["value"][0]
+                except:
+                    datetime_value = None
+                    pm25_value = -999
+                    voc_value = -999
+                    
+
+                if datetime_value != None:
+                    timeDiff = self.calTimeDiff(pm25_data["time"], currentTime)
+                    if(timeDiff < 5):
+                        onlineStatus = True
+
+                    query = '''
+                    INSERT INTO "Fixed_Sensor_History" 
+                        (
+                            "Device_Name", 
+                            "CreatedTime", 
+                            "Datetime",
+                            "Temperature", 
+                            "Humidity", 
+                            "Pm2_5", 
+                            "Co", 
+                            "Voc", 
+                            "So2", 
+                            "No2")
+                            VALUES (
+                                \'{}\', 
+                                \'{}\', 
+                                \'{}\', 
+                                -999, 
+                                -999, 
+                                {}, 
+                                -999, 
+                                {}, 
+                                -999, 
+                                -999
+                            );'''.format(
+                                pm25_data["deviceId"],
+                                currentTime,
+                                datetime_value,
+                                pm25_value,
+                                voc_value)
+                    # print(query)
+                    # print("============================")
+                    try:
+                        self.cursor.execute(query)
+                    except:
+                        continue

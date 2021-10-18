@@ -68,7 +68,8 @@ if __name__ == "__main__":
                 # print(project)
                 # printProgressBar(index, len(staticProjectMeta), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
-            # importDbContext.parseIn2Db(all_projectData)
+            importDbContext.parseIn2Db(all_projectData)
+            importDbContext.parseIn2Db(all_projectData)
             print(current_time + "  Complete")
         except:
             print(current_time + "  Connection failed!")
