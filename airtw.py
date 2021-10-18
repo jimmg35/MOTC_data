@@ -36,7 +36,8 @@ if __name__ == "__main__":
                             "host": "localhost", 
                             "port": "5432"}, "motcdev")      #
 
-    
+    # requestData(TOKEN, FORMAT, myDBcontext)
+
     schedule.every(3600).seconds.do(lambda: requestData(TOKEN, FORMAT, myDBcontext))
     while True:
         schedule.run_pending()

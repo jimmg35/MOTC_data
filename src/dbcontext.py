@@ -663,8 +663,8 @@ class Dbcontext():
         try:
             for index, i in enumerate(dataChunk):
                 checkNull(i)
-                query = '''INSERT INTO "Standard_Station_Observe" '''
-                column = '''("Station_Id", "CreatedTime", "Datetime", "Temperature", "RelativeHumidity", "Pm2_5", 
+                query = '''INSERT INTO "Standard_Station_History" '''
+                column = '''("Device_Name", "CreatedTime", "Datetime", "Temperature", "RelativeHumidity", "Pm2_5", 
                             "Pm10", "Co", "Co2", "No", "No2", "Nox", "So2", "O3", "Rainfall",
                             "Wind_Speed", "Wind_Direction", "Wind_Speed_HR") '''
                 values = '''VALUES(\'{}\', \'{}\', \'{}\', {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})'''.format(
@@ -676,9 +676,9 @@ class Dbcontext():
                 
                 #print(i)
                 self.cursor.execute(query + column + values)
-            print(dateTime + " complete!")
+            print(dateTime + " complete (history)!")
         except Exception as e:
-            print(dateTime + " dead!")
+            print(dateTime + " dead! (history)")
             print(e)
 
 

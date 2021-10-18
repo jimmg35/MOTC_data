@@ -74,13 +74,6 @@ if __name__ == "__main__":
         except:
             print(current_time + "  Connection failed!")
 
-
-
-
-
-        
-
-
     
     # crawlData(staticProjectMeta)
     
