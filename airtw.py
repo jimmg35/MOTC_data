@@ -21,6 +21,7 @@ def requestData(token, responseFormat, _context):
         data = json.loads(response.text)
         _context.clearAirTwTable()
         _context.airTwInsertChunk(data)
+        _context.airTwInsertChunkHistory(data)
     except:
         print("Response deviation!")
     #print("Complete | " + data[0]["DataCreationDate"])

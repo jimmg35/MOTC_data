@@ -585,6 +585,7 @@ class Dbcontext():
 
     def parseIn2DbHistory(self, all_projectData):
 
+
         currentTime = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 
         # insert real time data
@@ -647,3 +648,55 @@ class Dbcontext():
                         self.cursor.execute(query)
                     except:
                         continue
+
+    def airTwInsertChunkHistory(self, dataChunk):
+        dateTime = ""
+        def checkNull(data):
+            for i in data.keys():
+                if data[i] == '':
+                    #print(data)
+                    data[i] = '-999'
+                if data[i] == '-':
+                    data[i] = '-999'
+
+        currentTime = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+        try:
+            for index, i in enumerate(dataChunk):
+                checkNull(i)
+                query = '''INSERT INTO "Standard_Station_Observe" '''
+                column = '''("Station_Id", "CreatedTime", "Datetime", "Temperature", "RelativeHumidity", "Pm2_5", 
+                            "Pm10", "Co", "Co2", "No", "No2", "Nox", "So2", "O3", "Rainfall",
+                            "Wind_Speed", "Wind_Direction", "Wind_Speed_HR") '''
+                values = '''VALUES(\'{}\', \'{}\', \'{}\', {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})'''.format(
+                    i["SiteId"], currentTime, i["DataCreationDate"], i["AMB_TEMP"], i["RH"], i["PM2.5"],
+                    i["PM10"], i["CO"], i["CO"], i["NO"], i["NO2"], i["NOx"], i["SO2"], i["O3"], i["RAINFALL"],
+                    i["WIND_SPEED"], i["WIND_DIREC"], i["WS_HR"]
+                )
+                dateTime = i["DataCreationDate"]
+                
+                #print(i)
+                self.cursor.execute(query + column + values)
+            print(dateTime + " complete!")
+        except Exception as e:
+            print(dateTime + " dead!")
+            print(e)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
