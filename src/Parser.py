@@ -3,6 +3,8 @@ from os import listdir
 import numpy as np 
 import pandas as pd
 import json
+import typing
+from typing import List, Dict
 
 
 # deviceid, voc, pm2_5, humidity, temperature, date, hour, minute
@@ -117,6 +119,28 @@ class Parser():
             file_path_string += i + '_'
         file_path_string += "{}.csv".format(index)
         return file_path_string
+    
+    @staticmethod
+    def parseProjectMeta(projMeta: List[Dict]) -> Dict:
+        """
+            {"id":{"name": name, "keys": keys}}
+        """
+
+        queryset = ['528','671','672','673','674',
+                    '675','677','678','680','709',
+                    '756','1024','1025','1027','1029',
+                    '1032','1034','1035','1036','1048',
+                    '1058','1071','1072','1075','1079',
+                    '1084','1085','1102','1120','1145',
+                    '1147','1162','1167','1184','1189',
+                    '1192','1207','1156','565','624','891']
+        output = {}
+        for i in projMeta:
+            if str(i["id"]) in queryset:
+                keys = [k["key"] for k in i["projectKeys"]]
+                output[str(i["id"])] = {"name":i["name"], "keys":keys}
+        return output
+    
 
 
 class HourParser():

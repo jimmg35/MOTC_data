@@ -3,6 +3,7 @@
 
 import time
 import datetime
+from typing import List, Dict
 import schedule
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
@@ -65,6 +66,7 @@ class Dbcontext():
         print(f'                        Currently connected to database: @{database}')
         cursor = conn.cursor()
         return cursor 
+
 
     def ImportProjectMeta(self, projectMeta):
         """
@@ -687,9 +689,76 @@ class Dbcontext():
         self.cursor.execute(query)
 
 
+class MetaContext(Dbcontext):
+    project_info_table_name: str
+    device_info_table_name: str
 
+    def __init__(self, PGSQL_user_data, database) -> None:
+        # connect to database using inheritance constructor
+        super().__init__(PGSQL_user_data, database)
+        self.project_info_table_name = "Projects_Info"
+        self.device_info_table_name = "Fixed_Sensor_Info"
 
+    def updateProjectInfo(self, projectMetaData: List[Dict]) -> bool:
 
+        try:
+            self.clearExistingContext(
+                self.project_info_table_name
+            )
+
+            for project in projectMetaData:
+                query = '''INSERT INTO "{}" (
+                    "Project_Key",
+                    "Project_Name",
+                    "Project_Id"
+                    ) VALUES (
+                        \'{}\',
+                        \'{}\',
+                        \'{}\'
+                    )'''.format(
+                    self.project_info_table_name,
+                    project["projectKeys"][0]["key"],
+                    project["name"],
+                    project["id"]
+                )
+                self.cursor.execute(query)
+            return True
+        except:
+            return False
+
+    def updateFixedSensorInfo(self, deviceMeta) -> bool:
+        
+        try:
+            self.clearExistingContext(
+                self.device_info_table_name
+            )
+
+            for device in deviceMeta:
+                query = '''INSERT INTO "{}" (
+                    "Device_Id",
+                    "Device_Name",
+                    "Project_Key",
+                    "coordinate"
+                    ) VALUES (
+                        \'{}\',
+                        \'{}\',
+                        \'{}\',
+                        ST_GeomFromText('POINT({} {})', 4326) 
+                    )'''.format(
+                    self.device_info_table_name,
+                    device["id"],
+                    device["name"],
+                    device["key"],
+                    device["lon"],
+                    device["lat"]
+                )
+                self.cursor.execute(query)
+            return True
+        except:
+            return False
+
+    def clearExistingContext(self, table) -> None:
+        self.cursor.execute('''DELETE FROM "{}";'''.format(table))
 
 
 

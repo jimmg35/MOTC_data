@@ -31,10 +31,10 @@ def requestData(token, responseFormat, _context):
 if __name__ == "__main__":
 
     # initialize dbcontext
-    myDBcontext = Dbcontext({"user": "postgres", 
-                            "password": "r2tadmiadc",   #
-                            "host": "localhost", 
-                            "port": "5432"}, "motcdev")      #
+    myDBcontext = Dbcontext({"user":"postgres",
+                            "password":"r2tadmiadc",
+                            "host":"140.122.82.98",
+                            "port":"5432"}, "motcdev")      #
 
     # requestData(TOKEN, FORMAT, myDBcontext)
 

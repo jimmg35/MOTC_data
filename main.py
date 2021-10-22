@@ -30,18 +30,18 @@ if __name__ == "__main__":
     myReq = Requester(myBundler, myKey)
 
     # initialize dbcontext
-    myDBcontext = Dbcontext({"user": "postgres", 
-                            "password": "r2tadmiadc", 
-                            "host": "localhost", 
-                            "port": "5432"}, "sensordata")
+    myDBcontext = Dbcontext({"user":"postgres",
+                            "password":"r2tadmiadc",
+                            "host":"140.122.82.98",
+                            "port":"5432"}, "sensordata")
     staticProjectMeta = myDBcontext.getRealTimeDataMeta()
 
 
     # This import database context
-    importDbContext = Dbcontext({"user": "postgres", 
-                            "password": "r2tadmiadc", 
-                            "host": "localhost", 
-                            "port": "5432"}, "motcdev")
+    importDbContext = Dbcontext({"user":"postgres",
+                                "password":"r2tadmiadc",
+                                "host":"140.122.82.98",
+                                "port":"5432"}, "motcdev")
     
 
 

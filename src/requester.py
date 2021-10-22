@@ -29,32 +29,33 @@ class Requester():
         return json.loads(response.text)
 
 
-    def getDevicesOfProject(self, MyStorage, chooseOneKey=True):
+    def getDevicesOfProject(self, projectMetaData, chooseOneKey=True):
         ''' 
             Request for every device of all project 
         '''
 
-        output = {}
-        for i in list(MyStorage.storage["ProjectData"].keys()): #[0:10]
-            data_per_proj = []
-            keys = MyStorage.storage["ProjectData"][i]["keys"]
+        output = []
+        for i in list(projectMetaData.keys()): #[0:10]
+            keys = projectMetaData[i]["keys"]
             # Choose only one Project Key to request.
             if chooseOneKey:
                 response = requests.request("GET",
                                             self.UB.getDevicesOfProj,
                                             headers={"CK":keys[0]})
                 data = json.loads(response.text)
-                data_per_proj.append({"data":data, "ProjectKey":keys[0]})
-                output[str(i)] = data_per_proj
-                print("Project[{}] devices data downloaded!".format(i))
-            else:
-                for j in keys:
-                    response = requests.request("GET",
-                                                self.UB.getDevicesOfProj,
-                                                headers={"CK":j})
-                    data = json.loads(response.text)
-                    data_per_proj.append({"data": data, "ProjectKey":j})
-                output[str(i)] = data_per_proj
+                for device in data:
+                    try:
+                        output.append({
+                            "id": device["id"],
+                            "name": device["name"],
+                            "lat": device["lat"],
+                            "lon": device["lon"],
+                            "key": keys[0]
+                        })
+                    except:
+                        # print(projectMetaData[i]["name"])
+                        continue
+
                 print("Project[{}] devices data downloaded!".format(i))
         return output
 
