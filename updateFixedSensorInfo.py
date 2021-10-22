@@ -50,21 +50,3 @@ if __name__ == "__main__":
         print("Fixed_Sensor_Info update success!")
     else:
         print("Fixed_Sensor_Info update fail!")
-
-
-    # print(deviceMeta)
-    # get devices of every project.
-    # deviceMeta = myReq.getDevicesOfProject(myStorage)
-    # deviceMeta_processed = Parser.parseDevicesMeta(deviceMeta)
-
-
-
-    # # get projects metadata.
-    # projMeta = myReq.getAllProjectsMeta()
-    # projMeta_processed = Parser.parseProjectMeta(projMeta)
-    # myStorage.insert(projMeta_processed, "ProjectData")
-
-    # # get devices of every project.
-    # deviceMeta = myReq.getDevicesOfProject(myStorage)
-    # deviceMeta_processed = Parser.parseDevicesMeta(deviceMeta)
-    # myStorage.insert(deviceMeta_processed, "DeviceMeta")

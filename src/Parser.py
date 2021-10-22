@@ -144,10 +144,10 @@ class Parser():
 
 
 class HourParser():
-    @staticmethod
-    def parseTimeStamp(timestamp):
+    # @staticmethod
+    # def parseTimeStamp(timestamp):
         
-        return date, int(hour)
+    #     return date, int(hour)
 
     @staticmethod
     def parseHourData(data_list, deviceId, hasVoc):
