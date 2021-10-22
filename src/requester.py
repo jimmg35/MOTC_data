@@ -187,6 +187,7 @@ class Requester():
             # print("==============")
             data = json.loads(response.text)
             output.append(data)
+            print(sid)
         return output
     
 

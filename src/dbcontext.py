@@ -379,6 +379,7 @@ class Dbcontext():
 
     def parseIn2mobileSensorDB(self, allSensorData):
         self.cursor.execute('''DELETE FROM "Mobile_Sensor_Observer";''')
+
         for sfm_flow, pm2_5_uart, voc, pm2_5_i2c, temperature, humidity, speed in zip(allSensorData[0], allSensorData[1], allSensorData[2], allSensorData[3], allSensorData[4], allSensorData[5], allSensorData[6]):
 
             if "time" not in sfm_flow:
@@ -446,10 +447,11 @@ class Dbcontext():
                             temperature_value, 
                             humidity_value, 
                             speed_value,
-                            sfm_flow["lat"],
-                            sfm_flow["lon"], 
+                            sfm_flow["lon"],
+                            sfm_flow["lat"], 
                         )
 
+            # print(query)
 
             self.cursor.execute(query)
     
@@ -549,8 +551,8 @@ class Dbcontext():
                             temperature_value, 
                             humidity_value, 
                             speed_value,
-                            sfm_flow["lat"],
-                            sfm_flow["lon"]
+                            sfm_flow["lon"],
+                            sfm_flow["lat"]
                         )
 
 
@@ -681,7 +683,8 @@ class Dbcontext():
             print(dateTime + " dead! (history)")
             print(e)
 
-
+    def execute(self, query):
+        self.cursor.execute(query)
 
 
 

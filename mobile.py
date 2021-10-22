@@ -13,9 +13,10 @@ from datetime import datetime
 init(convert=True)
 
 # import main functionality
+from src.requester import Requester
 from src.Parser import GeoJsonParser
 from src.dbcontext import Dbcontext
-from src.requester import Requester
+
 from src.utils import UrlBundler, Key
 
 
@@ -51,7 +52,7 @@ if __name__ == "__main__":
         now = datetime.now()
         current_time = now.strftime("%Y-%m-%d %H:%M:%S")
 
-        ## 抓取1156 所有裝置 所有測項的資料
+        # 抓取1156 所有裝置 所有測項的資料
         try:
             allSensorData = myReq.getMobileData_1156("PKRZ1XHS4SS4YEEYHF", sensor_ids)
             importDbContext.parseIn2mobileSensorDB(allSensorData)
