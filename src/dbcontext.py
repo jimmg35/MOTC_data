@@ -692,12 +692,14 @@ class Dbcontext():
 class MetaContext(Dbcontext):
     project_info_table_name: str
     device_info_table_name: str
+    standard_info_table_name: str
 
     def __init__(self, PGSQL_user_data, database) -> None:
         # connect to database using inheritance constructor
         super().__init__(PGSQL_user_data, database)
         self.project_info_table_name = "Projects_Info"
         self.device_info_table_name = "Fixed_Sensor_Info"
+        self.standard_info_table_name = "Standard_Station_Info"
 
     def updateProjectInfo(self, projectMetaData: List[Dict]) -> bool:
 
@@ -756,6 +758,38 @@ class MetaContext(Dbcontext):
             return True
         except:
             return False
+
+    def updateStandardSensorInfo(self, data) -> bool:
+        self.clearExistingContext(
+            self.standard_info_table_name
+        )
+
+        try:
+            for i in data:
+                query = '''
+                    INSERT INTO "Standard_Station_Info" 
+                    (
+                        "Station_Id",
+                        "Station_Name",
+                        "coordinate"
+                    ) VALUES (
+                        \'{}\',
+                        \'{}\',
+                        ST_GeomFromText('POINT({} {})', 4326) 
+                    )
+                    '''.format(
+                        i["SiteId"],
+                        i["SiteName"],
+                        i["Longitude"],
+                        i["Latitude"]
+                )
+                self.cursor.execute(query)  
+            print("Standard Info update successed!")
+            return True
+        except:
+            return False
+    
+
 
     def clearExistingContext(self, table) -> None:
         self.cursor.execute('''DELETE FROM "{}";'''.format(table))
