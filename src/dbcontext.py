@@ -258,7 +258,9 @@ class Dbcontext():
             ids += 1
     
     def getRealTimeDataMeta(self):
-        query = '''SELECT projectid, projectkeys[1]  FROM projectmeta;'''
+        #query = '''SELECT projectid, projectkeys[1]  FROM projectmeta;'''
+        
+        query = '''SELECT "Project_Id", "Project_Key" FROM "Projects_Info";'''
         self.cursor.execute(query)
         return self.cursor.fetchall()
     

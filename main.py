@@ -2,13 +2,16 @@
 import os 
 import sys
 import json
+import time
+import queue
 import requests
+import schedule
+import threading
 import pandas as pd
 from os import listdir, stat
+from datetime import datetime
 from typing import List, Dict
 from colorama import init, Fore, Back, Style
-from datetime import datetime
-import schedule
 init(convert=True)
 
 # 一分鐘
@@ -17,11 +20,14 @@ init(convert=True)
 from src.Parser import GeoJsonParser
 from src.dbcontext import Dbcontext
 from src.requester import Requester
-from src.utils import UrlBundler, Key, printProgressBar
+from src.utils import UrlBundler, Key
+from src.MultiThread import FixedRequestWorker
 
 sensor_id = "pm2_5"
-
 sensor_ids = ["pm2_5", "voc"]
+number_of_workers = 5
+
+
 
 if __name__ == "__main__":
     # initialize basic object.
@@ -29,50 +35,54 @@ if __name__ == "__main__":
     myBundler = UrlBundler()
     myReq = Requester(myBundler, myKey)
 
-    # initialize dbcontext
-    myDBcontext = Dbcontext({"user":"postgres",
-                            "password":"r2tadmiadc",
-                            "host":"140.122.82.98",
-                            "port":"5432"}, "sensordata")
-    staticProjectMeta = myDBcontext.getRealTimeDataMeta()
-
-
     # This import database context
     importDbContext = Dbcontext({"user":"postgres",
                                 "password":"r2tadmiadc",
                                 "host":"140.122.82.98",
                                 "port":"5432"}, "motcdev")
+    staticProjectMeta = importDbContext.getRealTimeDataMeta()
     
 
 
+    # 抓取所有專案 所有裝置 所有測項的資料
     def crawlData(staticProjectMeta):
+        worker_array = []
+        all_projectData = []
         now = datetime.now()
         current_time = now.strftime("%Y-%m-%d %H:%M:%S")
 
+        # 建立佇列
+        project_queue = queue.Queue()
+
+        # 將專案請求參數放入佇列
+        for index, project in enumerate(staticProjectMeta):
+            project_queue.put({
+                "projectId": project[0],
+                "projectKey": project[1],
+                "sensor_ids": sensor_ids
+            })
         
+        # 建立Worker陣列
+        for i in range(0, number_of_workers):
+            my_worker = FixedRequestWorker(project_queue, i)
+            worker_array.append(my_worker)
 
-        # 抓取所有專案 所有裝置 所有測項的資料
-        try:
-            all_projectData = []
-            # printProgressBar(0, len(staticProjectMeta), prefix = 'Progress:', suffix = 'Complete', length = 50)
-            for index, project in enumerate(staticProjectMeta):
-                dataChunk = None
-                try:
-                    dataChunk = myReq.getRealTimeProjectData(
-                        project[1], 
-                        sensor_ids
-                    )
-                except:
-                    print(current_time + "  Connection failed!")
-                all_projectData.append(dataChunk)
-                # print(project)
-                # printProgressBar(index, len(staticProjectMeta), prefix = 'Progress:', suffix = 'Complete', length = 50)
+        # 啟動所有Worker
+        for worker in worker_array:
+            worker.start()
 
-            importDbContext.parseIn2Db(all_projectData)
-            importDbContext.parseIn2DbHistory(all_projectData)
-            print(current_time + "  Complete")
-        except:
-            print(current_time + "  Connection failed!")
+        # 等待佇列中的任務執行完畢
+        for worker in worker_array:
+            worker.join()
+
+        # 蒐集output
+        for worker in worker_array:
+            all_projectData += worker.export()
+            
+        # 輸入資料進DB
+        importDbContext.parseIn2Db(all_projectData)
+        importDbContext.parseIn2DbHistory(all_projectData)
+        print("====== " + current_time + "  Complete ======")
 
     
     # crawlData(staticProjectMeta)
