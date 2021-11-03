@@ -43,8 +43,8 @@ if __name__ == "__main__":
 
 
 
-    projMeta_processed = Parser.parseProjectMeta(projMeta)
-    deviceMeta = myReq.getDevicesOfProject(projMeta_processed)
+    projMeta_processed = Parser.parseProjectMeta(projMeta, myDBcontext.project_filter_array )
+    deviceMeta = myReq.getDevicesOfProject(projMeta_processed, myDBcontext.project_filter_array)
     deviceUpdateStatus = myDBcontext.updateFixedSensorInfo(deviceMeta)
     if(deviceUpdateStatus):
         print("Fixed_Sensor_Info update success!")

@@ -2,11 +2,13 @@
 # Author : @jimmg35
 
 import time
+import queue
 import datetime
 from typing import List, Dict
 import schedule
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from src.MultiThread import FixedDbWorker, WorkerCollection
 
 
 class Storer():
@@ -273,24 +275,36 @@ class Dbcontext():
 
         currentTime = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 
+        # 建立佇列
+        project_queue = queue.Queue()
+
         # insert real time data
         for project_data in all_projectData:
-            for pm25_data, voc_data in zip(project_data[0], project_data[1]):
-                
+            device_number = 0
+            for index, i in enumerate(project_data):
+                if device_number < len(i):
+                    device_number = len(i)
+            for index, i in enumerate(project_data):
+                if len(i) != device_number:
+                    project_data[index] = [None for i in range(0, device_number)]
+            for pm25_data, voc_data, temp_data, humi_data, co_data, so2_data, no2_data in zip(project_data[0], project_data[1], project_data[2], project_data[3], project_data[4], project_data[5], project_data[6]):
+
                 datetime_value = None
-                pm25_value = None
-                voc_value = None
                 onlineStatus = False
+                pm25_value = self.extractData(pm25_data)
+                voc_value = self.extractData(voc_data)
+                temp_value = self.extractData(temp_data)
+                humi_value = self.extractData(humi_data)
+                co_value = self.extractData(co_data)
+                so2_value = self.extractData(so2_data)
+                no2_value = self.extractData(no2_data)
+                # print(no2_value)
 
                 try:
                     datetime_value = pm25_data["time"]
-                    pm25_value = voc_data["value"][0]
-                    voc_value = pm25_data["value"][0]
                 except:
                     datetime_value = None
-                    pm25_value = -999
-                    voc_value = -999
-                    
+
 
                 if datetime_value != None:
                     timeDiff = self.calTimeDiff(pm25_data["time"], currentTime)
@@ -314,29 +328,102 @@ class Dbcontext():
                             VALUES (
                                 \'{}\', 
                                 \'{}\', 
-                                -999, 
-                                -999, 
                                 {}, 
-                                -999, 
                                 {}, 
-                                -999, 
-                                -999, 
+                                {}, 
+                                {}, 
+                                {}, 
+                                {}, 
+                                {}, 
                                 \'{}\', 
                                 {}
                             );'''.format(
                                 pm25_data["deviceId"],
                                 datetime_value,
+                                temp_value,
+                                humi_value,
                                 pm25_value,
+                                co_value,
                                 voc_value, 
+                                so2_value,
+                                no2_value,
                                 currentTime, 
                                 onlineStatus)
-                    # print(query)
-                    # print("============================")
-                    try:
-                        self.cursor.execute(query)
-                    except:
-                        continue
+                    
+                    query_history = '''
+                    INSERT INTO "Fixed_Sensor_History" 
+                        (
+                            "Device_Name", 
+                            "CreatedTime", 
+                            "Datetime",
+
+                            "Temperature", 
+                            "Humidity", 
+                            "Pm2_5", 
+                            "Co", 
+                            "Voc", 
+                            "So2", 
+                            "No2")
+                            VALUES (
+                                \'{}\', 
+                                \'{}\', 
+                                \'{}\', 
+                                {}, 
+                                {}, 
+                                {}, 
+                                {}, 
+                                {}, 
+                                {}, 
+                                {}
+                            );'''.format(
+                                pm25_data["deviceId"],
+                                currentTime,
+                                datetime_value,
+                                temp_value,
+                                humi_value,
+                                pm25_value,
+                                co_value,
+                                voc_value,
+                                so2_value,
+                                no2_value)
+
+                    project_queue.put({
+                        "query": query
+                    })
+                    project_queue.put({
+                        "query": query_history
+                    })
+                    # try:
+                    #     self.cursor.execute(query)
+                    #     self.cursor.execute(query_history)
+                    # except:
+                    #     continue
+        
+        # 建立Worker
+        worker_collection = WorkerCollection[FixedDbWorker]()
+        for i in range(0, 5):
+            my_worker = FixedDbWorker(project_queue, i, self.cursor)
+            worker_collection.add(my_worker)
+        
+        # 啟動所有Worker
+        worker_collection.startAll()
+
+        # 等待佇列中的任務執行完畢
+        worker_collection.joinAll()
+
+
+
     
+    def extractData(self, data):
+        try:
+            a = data["time"]
+            if data["value"][0] == "NA":
+                return "null"
+            return data["value"][0]
+        except:
+            return "null"
+
+
     def calTimeDiff(self, TimeStart, TimeEnd):
         TimeStart = TimeStart.split('.')[0]
         TimeStart = datetime.datetime.strptime(TimeStart, '%Y-%m-%d %H:%M:%S')
@@ -696,12 +783,25 @@ class MetaContext(Dbcontext):
     device_info_table_name: str
     standard_info_table_name: str
 
+    project_filter_array: List[str]
+
     def __init__(self, PGSQL_user_data, database) -> None:
         # connect to database using inheritance constructor
         super().__init__(PGSQL_user_data, database)
         self.project_info_table_name = "Projects_Info"
         self.device_info_table_name = "Fixed_Sensor_Info"
         self.standard_info_table_name = "Standard_Station_Info"
+
+        self.project_filter_array = [
+            "528", "1189", "1223",
+            "1120", "1148", 
+            "1102",
+            "820", "1167",
+            "822", "1025", "1147",
+            "829", "1032"
+        ]
+
+        # 1032, 1147, 1102
 
     def updateProjectInfo(self, projectMetaData: List[Dict]) -> bool:
 
@@ -711,21 +811,27 @@ class MetaContext(Dbcontext):
             )
 
             for project in projectMetaData:
-                query = '''INSERT INTO "{}" (
-                    "Project_Key",
-                    "Project_Name",
-                    "Project_Id"
-                    ) VALUES (
-                        \'{}\',
-                        \'{}\',
-                        \'{}\'
-                    )'''.format(
-                    self.project_info_table_name,
-                    project["projectKeys"][0]["key"],
-                    project["name"],
-                    project["id"]
-                )
-                self.cursor.execute(query)
+                # print(str(project["id"]) in self.project_filter_array)
+                
+                if self.filterProjectCode(str(project["id"])):
+                    query = '''INSERT INTO "{}" (
+                        "Project_Key",
+                        "Project_Name",
+                        "Project_Id"
+                        ) VALUES (
+                            \'{}\',
+                            \'{}\',
+                            \'{}\'
+                        )'''.format(
+                        self.project_info_table_name,
+                        project["projectKeys"][0]["key"],
+                        project["name"],
+                        project["id"]
+                    )
+                    self.cursor.execute(query)
+                    print(project["id"])
+
+
             return True
         except:
             return False
@@ -738,6 +844,8 @@ class MetaContext(Dbcontext):
             )
 
             for device in deviceMeta:
+                # print(self.filterProjectCode(str(device["id"])))
+
                 query = '''INSERT INTO "{}" (
                     "Device_Id",
                     "Device_Name",
@@ -792,6 +900,11 @@ class MetaContext(Dbcontext):
             return False
     
 
+    def filterProjectCode(self, projectId) -> bool:
+        if projectId in self.project_filter_array:
+            return True
+        else:
+            return False
 
     def clearExistingContext(self, table) -> None:
         self.cursor.execute('''DELETE FROM "{}";'''.format(table))

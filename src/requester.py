@@ -29,13 +29,14 @@ class Requester():
         return json.loads(response.text)
 
 
-    def getDevicesOfProject(self, projectMetaData, chooseOneKey=True):
+    def getDevicesOfProject(self, projectMetaData, filterProjectArray, chooseOneKey=True):
         ''' 
             Request for every device of all project 
         '''
 
         output = []
         for i in list(projectMetaData.keys()): #[0:10]
+            # print(projectMetaData[i])
             keys = projectMetaData[i]["keys"]
             # Choose only one Project Key to request.
             if chooseOneKey:
@@ -166,13 +167,16 @@ class Requester():
     def getRealTimeProjectData(self, CK, sensor_ids):
         dataChunk = []
         for sensor_id in sensor_ids:
-            response = requests.request(
-                "GET", 
-                self.UB.getRealTime.format(sensor_id), 
-                headers={'CK': CK}
-            )
-            data = json.loads(response.text)
-            dataChunk.append(data)
+            try:
+                response = requests.request(
+                    "GET", 
+                    self.UB.getRealTime.format(sensor_id), 
+                    headers={'CK': CK}
+                )
+                data = json.loads(response.text)
+                dataChunk.append(data)
+            except:
+                continue
         return dataChunk
 
 
