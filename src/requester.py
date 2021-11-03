@@ -36,7 +36,11 @@ class Requester():
 
         output = []
         for i in list(projectMetaData.keys()): #[0:10]
+<<<<<<< HEAD
             # print(projectMetaData[i])
+=======
+            
+>>>>>>> 4a2ceecc4eb8d39893d69868b6d7658dd50b5d28
             keys = projectMetaData[i]["keys"]
             # Choose only one Project Key to request.
             if chooseOneKey:
