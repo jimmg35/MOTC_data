@@ -633,8 +633,8 @@ class Dbcontext():
                         ST_GeomFromText('POINT({} {})', 4326) 
                     );'''.format(
                             sfm_flow["deviceId"], 
-                            sfm_flow["time"], 
-                            currentTime,
+                            currentTime, 
+                            sfm_flow["time"],
                             voc_value,
                             sfm_flow_value, 
                             pm2_5_uart_value,
@@ -909,6 +909,63 @@ class MetaContext(Dbcontext):
     def clearExistingContext(self, table) -> None:
         self.cursor.execute('''DELETE FROM "{}";'''.format(table))
 
+
+class MobileDumper(Dbcontext):
+
+    def __init__(self, PGSQL_user_data, database) -> None:
+        # connect to database using inheritance constructor
+        super().__init__(PGSQL_user_data, database)
+
+    def dump2Db(self, data) -> None:
+
+        currentTime = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+
+        for index, row in data.iterrows():
+
+            query = '''
+            INSERT INTO "Mobile_Sensor_History" (
+                "Device_Name", 
+                "CreatedTime",
+                "Datetime", 
+
+                "Voc", 
+                "Flow", 
+                "Pm2_5_UART", 
+                "Pm2_5_I2C", 
+                "Temperature", 
+                "Humidity", 
+                "Speed", 
+                "coordinate")
+                    VALUES(
+                        \'{}\', 
+                        \'{}\', 
+                        \'{}\', 
+                        {}, 
+                        {}, 
+                        {}, 
+                        {}, 
+                        {}, 
+                        {}, 
+                        {},
+                        ST_GeomFromText('POINT({} {})', 4326) 
+                    );'''.format(
+                            row["id"], 
+                            currentTime, 
+                            row["time"],
+
+                            row["voc"],
+                            row["SFM_flow"], 
+                            row["pm2_5_uart"],
+                            row["pm2_5_i2c"], 
+                            row["temperature"], 
+                            row["humidity"], 
+                            row["speed"],
+                            row["lon"],
+                            row["lat"]
+                        )
+
+            self.cursor.execute(query)
+            print("row {} import complete!".format(index))
 
 
 
