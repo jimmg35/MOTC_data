@@ -287,117 +287,121 @@ class Dbcontext():
             for index, i in enumerate(project_data):
                 if len(i) != device_number:
                     project_data[index] = [None for i in range(0, device_number)]
-            for pm25_data, voc_data, temp_data, humi_data, co_data, so2_data, no2_data in zip(project_data[0], project_data[1], project_data[2], project_data[3], project_data[4], project_data[5], project_data[6]):
+            
+            try:
+                for pm25_data, voc_data, temp_data, humi_data, co_data, so2_data, no2_data in zip(project_data[0], project_data[1], project_data[2], project_data[3], project_data[4], project_data[5], project_data[6]):
 
-                datetime_value = None
-                onlineStatus = False
-                pm25_value = self.extractData(pm25_data)
-                voc_value = self.extractData(voc_data)
-                temp_value = self.extractData(temp_data)
-                humi_value = self.extractData(humi_data)
-                co_value = self.extractData(co_data)
-                so2_value = self.extractData(so2_data)
-                no2_value = self.extractData(no2_data)
-                # print(no2_value)
-
-                try:
-                    datetime_value = pm25_data["time"]
-                except:
                     datetime_value = None
+                    onlineStatus = False
+                    pm25_value = self.extractData(pm25_data)
+                    voc_value = self.extractData(voc_data)
+                    temp_value = self.extractData(temp_data)
+                    humi_value = self.extractData(humi_data)
+                    co_value = self.extractData(co_data)
+                    so2_value = self.extractData(so2_data)
+                    no2_value = self.extractData(no2_data)
+                    # print(no2_value)
+
+                    try:
+                        datetime_value = pm25_data["time"]
+                    except:
+                        datetime_value = None
 
 
-                if datetime_value != None:
-                    timeDiff = self.calTimeDiff(pm25_data["time"], currentTime)
-                    if(timeDiff < 5):
-                        onlineStatus = True
+                    if datetime_value != None:
+                        timeDiff = self.calTimeDiff(pm25_data["time"], currentTime)
+                        if(timeDiff < 5):
+                            onlineStatus = True
 
-                    query = '''
-                    INSERT INTO "Fixed_Sensor_Observe" 
-                        (
-                            "Device_Name", 
-                            "Datetime", 
-                            "Temperature", 
-                            "Humidity", 
-                            "Pm2_5", 
-                            "Co", 
-                            "Voc", 
-                            "So2", 
-                            "No2", 
-                            "CreatedTime", 
-                            "onlineStatus")
-                            VALUES (
-                                \'{}\', 
-                                \'{}\', 
-                                {}, 
-                                {}, 
-                                {}, 
-                                {}, 
-                                {}, 
-                                {}, 
-                                {}, 
-                                \'{}\', 
-                                {}
-                            );'''.format(
-                                pm25_data["deviceId"],
-                                datetime_value,
-                                temp_value,
-                                humi_value,
-                                pm25_value,
-                                co_value,
-                                voc_value, 
-                                so2_value,
-                                no2_value,
-                                currentTime, 
-                                onlineStatus)
-                    
-                    query_history = '''
-                    INSERT INTO "Fixed_Sensor_History" 
-                        (
-                            "Device_Name", 
-                            "CreatedTime", 
-                            "Datetime",
+                        query = '''
+                        INSERT INTO "Fixed_Sensor_Observe" 
+                            (
+                                "Device_Name", 
+                                "Datetime", 
+                                "Temperature", 
+                                "Humidity", 
+                                "Pm2_5", 
+                                "Co", 
+                                "Voc", 
+                                "So2", 
+                                "No2", 
+                                "CreatedTime", 
+                                "onlineStatus")
+                                VALUES (
+                                    \'{}\', 
+                                    \'{}\', 
+                                    {}, 
+                                    {}, 
+                                    {}, 
+                                    {}, 
+                                    {}, 
+                                    {}, 
+                                    {}, 
+                                    \'{}\', 
+                                    {}
+                                );'''.format(
+                                    pm25_data["deviceId"],
+                                    datetime_value,
+                                    temp_value,
+                                    humi_value,
+                                    pm25_value,
+                                    co_value,
+                                    voc_value, 
+                                    so2_value,
+                                    no2_value,
+                                    currentTime, 
+                                    onlineStatus)
+                        
+                        query_history = '''
+                        INSERT INTO "Fixed_Sensor_History" 
+                            (
+                                "Device_Name", 
+                                "CreatedTime", 
+                                "Datetime",
 
-                            "Temperature", 
-                            "Humidity", 
-                            "Pm2_5", 
-                            "Co", 
-                            "Voc", 
-                            "So2", 
-                            "No2")
-                            VALUES (
-                                \'{}\', 
-                                \'{}\', 
-                                \'{}\', 
-                                {}, 
-                                {}, 
-                                {}, 
-                                {}, 
-                                {}, 
-                                {}, 
-                                {}
-                            );'''.format(
-                                pm25_data["deviceId"],
-                                currentTime,
-                                datetime_value,
-                                temp_value,
-                                humi_value,
-                                pm25_value,
-                                co_value,
-                                voc_value,
-                                so2_value,
-                                no2_value)
+                                "Temperature", 
+                                "Humidity", 
+                                "Pm2_5", 
+                                "Co", 
+                                "Voc", 
+                                "So2", 
+                                "No2")
+                                VALUES (
+                                    \'{}\', 
+                                    \'{}\', 
+                                    \'{}\', 
+                                    {}, 
+                                    {}, 
+                                    {}, 
+                                    {}, 
+                                    {}, 
+                                    {}, 
+                                    {}
+                                );'''.format(
+                                    pm25_data["deviceId"],
+                                    currentTime,
+                                    datetime_value,
+                                    temp_value,
+                                    humi_value,
+                                    pm25_value,
+                                    co_value,
+                                    voc_value,
+                                    so2_value,
+                                    no2_value)
 
-                    project_queue.put({
-                        "query": query
-                    })
-                    project_queue.put({
-                        "query": query_history
-                    })
-                    # try:
-                    #     self.cursor.execute(query)
-                    #     self.cursor.execute(query_history)
-                    # except:
-                    #     continue
+                        project_queue.put({
+                            "query": query
+                        })
+                        project_queue.put({
+                            "query": query_history
+                        })
+                        # try:
+                        #     self.cursor.execute(query)
+                        #     self.cursor.execute(query_history)
+                        # except:
+                        #     continue
+            except:
+                continue
         
         # 建立Worker
         worker_collection = WorkerCollection[FixedDbWorker]()
